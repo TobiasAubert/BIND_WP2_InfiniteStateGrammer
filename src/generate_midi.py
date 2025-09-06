@@ -51,7 +51,7 @@ def generate_midis(tempo = tempo, time = time, states = None, state_sequences = 
 
 def save_midi(mf, seed, name):
     here = Path(__file__).parent
-    base_folder= here.parent / "src" / "generated_midis"
+    base_folder= here.parent / "generated_midis"
     
     seed_folder = base_folder / f"seed_{seed}"
     seed_folder.mkdir(parents=True,exist_ok=True) # create folder if missing
