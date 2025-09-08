@@ -8,7 +8,7 @@ from midi_writer import render_sequence_to_midi
 
 # --- config (easy to tweak / pass via CLI later)
 TEMPO = 120
-SEED  = 13
+SEED  = 1
 
 # --- pitches
 pitches_left  = {"C4": 60, "D4": 62, "E4": 64, "F4": 65, "G4": 67}
