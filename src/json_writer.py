@@ -82,7 +82,7 @@ class PianoVisionJsonWriter:
         self.ts = ts
         self.ppq = int(ppq)
 
-    def build_json(self, right_notes: List[Dict[str, Any]], left_notes: List[Dict[str, Any]]) -> Dict[str, Any]:
+    def build_json(self, right_notes: List[Dict[str, Any]], left_notes: List[Dict[str, Any]], name: str="unknown") -> Dict[str, Any]:
         # right_notes/left_notes: dicts with midi, start(s), duration(s), velocity(0..1), finger(optional)
         song_len = self._song_length(right_notes, left_notes)
         measures, _ = _build_measures(self.bpm, self.ts, song_len, self.ppq)
@@ -103,11 +103,12 @@ class PianoVisionJsonWriter:
             "original": {"header": {
                 "keySignatures": [], "meta": [], "name": "",
                 "ppq": self.ppq, "tempos": [{"bpm": self.bpm, "ticks": 0}], "timeSignatures": []
-            }}
+            }},
+            "name": name,
         }
 
-    def write(self, path: Path, right_notes: List[Dict[str, Any]], left_notes: List[Dict[str, Any]]) -> None:
-        payload = self.build_json(right_notes, left_notes)
+    def write(self, path: Path, right_notes: List[Dict[str, Any]], left_notes: List[Dict[str, Any]], name) -> None:
+        payload = self.build_json(right_notes, left_notes, name)
         with open(path, "w", encoding="utf-8") as f:
             json.dump(payload, f, ensure_ascii=False, indent=2)
 

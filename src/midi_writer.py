@@ -73,9 +73,8 @@ def render_sequence_to_midi(seq_name, dyads, state_sequence,
     # --- Save PianoVision JSON next to the MIDI ---
     if write_json:
         writer = PianoVisionJsonWriter(bpm=tempo, ts=(4,4), ppq=960)
-        json_path = midi_path.with_suffix(".pv.json")
-        # json_path = Path(__file__).parent 
-        writer.write(json_path, right_notes, left_notes)
+        json_path = midi_path.with_suffix(".pv.json") 
+        writer.write(json_path, right_notes, left_notes, f"seed_{seed}_{seq_name}")
 
     return midi_path
 
