@@ -8,7 +8,7 @@ from midi_writer import render_sequence_to_midi
 
 # --- config (easy to tweak / pass via CLI later)
 TEMPO = 120
-SEED  = 1
+SEED  = 13
 
 # --- pitches
 pitches_left  = {"C4": 60, "D4": 62, "E4": 64, "F4": 65, "G4": 67}
@@ -34,9 +34,11 @@ def main():
             dyads=dyads,
             state_sequence=seq,
             pitches_left=pitches_left,
+            pitches_right=pitches_right,
             tempo=TEMPO,
             seed=seed,
             out_root=out_root,
+            write_json= True
         )
         
 
