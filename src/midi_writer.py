@@ -1,80 +1,79 @@
-from json_writer import PianoVisionJsonWriter  # the class we made earlier
 from pathlib import Path
+from typing import Dict, Any, Sequence, Tuple
 from midiutil import MIDIFile
 
+def write_midi(
+    seq_name: str,
+    events: Sequence[Dict[str, Any]],
+    *,
+    tempo: float,
+    seed: int,
+    out_root: Path,
+    track_names: Tuple[str, ...] = ("Right", "Left"),
+    channel: int = 0,
+) -> Path:
+    """
+    Write a MIDI file from note 'events'.
 
-def render_sequence_to_midi(seq_name, dyads, state_sequence,
-                             pitches_left, pitches_right,
-                             tempo, seed, out_root, write_json=True):
+    Args:
+        seq_name (str): Name of the sequence (used in the file name).
+        events (Sequence[Dict[str, Any]]): List of note events. Each event must have:
+            - track (int): Which MIDI track the note belongs to (0=right, 1=left).
+            - pitch (int): MIDI note number (0–127).
+            - start_beats (float): Start time in beats.
+            - duration_beats (float): Note duration in beats.
+            - velocity (int): MIDI velocity (0–127).
+        tempo (float): Tempo in beats per minute (BPM).
+        seed (int): Random seed or sequence ID (used in folder/file name).
+        out_root (Path): Root folder where files should be saved.
+        track_names (Tuple[str, ...]): Optional names for tracks (defaults: "Right", "Left").
+        channel (int): MIDI channel number (default 0).
 
-    # --- MIDI setup (unchanged) ---
-    mf = MIDIFile(2)  # 0 = right, 1 = left
-    mf.addTrackName(1, 0, "Left");  mf.addTempo(1, 0, tempo)
-    mf.addTrackName(0, 0, "Right"); mf.addTempo(0, 0, tempo)
+    Returns:
+        Path: Path to the written `.mid` file.
+    """
 
-    # For fast membership checks
-    LH_KEYS = sorted(pitches_left.values())
-    RH_KEYS = sorted(pitches_right.values())
+    # --- Setup ---
+    # Ensure we have enough tracks: take the maximum track index in events + 1,
+    # and compare with the number of names in track_names.
+    num_tracks = max(max(e["track"] for e in events) + 1, len(track_names))
 
-    #Fingering mapping
-    # Left hand: C3..G3 (MIDI 48–55), fingers 5–1, thumb = 1
-    LH_FINGERS = {
-        LH_KEYS[0]: 5,  # C3
-        LH_KEYS[1]: 4,  # D3
-        LH_KEYS[2]: 3,  # E3
-        LH_KEYS[3]: 2,  # F3
-        LH_KEYS[4]: 1,  # G3
-    }
+    # Create a MIDIFile with the right number of tracks.
+    mf = MIDIFile(
+        numTracks=num_tracks,
+        removeDuplicates=False,  # allow duplicate events if any
+        deinterleave=False,      # keep track events as given
+        file_format=1,           # type-1 MIDI: multi-track file
+    )
 
-    # Right hand: C4..G4 (MIDI 60–67), fingers 1–5, thumb = 1
-    RH_FINGERS = {
-        RH_KEYS[0]: 1,  # C4
-        RH_KEYS[1]: 2,  # D4
-        RH_KEYS[2]: 3,  # E4
-        RH_KEYS[3]: 4,  # F4
-        RH_KEYS[4]: 5,  # G4
-    }
+    # --- Add track metadata ---
+    for t in range(num_tracks):
+        # Use provided track name if available, otherwise fallback to "Track N"
+        name = track_names[t] if t < len(track_names) else f"Track {t}"
+        mf.addTrackName(t, 0, name)
+        mf.addTempo(t, 0, float(tempo))  # set tempo at start of track
 
-    # --- JSON note capture ---
-    right_notes, left_notes = [], []
-    spb = 60.0 / float(tempo)   # seconds per beat
+    # --- Add note events ---
+    for e in events:
+        t = int(e["track"])             # which track
+        p = int(e["pitch"])             # MIDI pitch
+        start = float(e["start_beats"]) # start time in beats
+        dur = float(e["duration_beats"])# duration in beats
+        vel = int(e["velocity"])        # velocity (0–127)
 
-    t_beats = 0.0
-    for d in state_sequence:
-        a, b = dyads[d]  # two MIDI pitches
-        for pitch in (a, b):
-            track = 1 if pitch in LH_KEYS else 0
+        # Add the note event to the MIDI track
+        mf.addNote(t, channel, p, start, dur, vel)
 
-            # MIDI note (time/duration are in BEATS)
-            mf.addNote(track, 0, int(pitch), float(t_beats), 1.0, 100)
-
-            # JSON note (start/duration are in SECONDS)
-            note_dict = {
-                "midi": int(pitch),
-                "start": round(t_beats * spb, 6),
-                "duration": round(1.0 * spb, 6),   # quarter note = 1 beat
-                "velocity": round(100 / 127.0, 6),
-                "finger": LH_FINGERS.get(int(pitch)) if track == 1 else RH_FINGERS.get(int(pitch))
-            }
-            if track == 1:
-                left_notes.append(note_dict)
-            else:
-                right_notes.append(note_dict)
-
-        t_beats += 1.0
-
-    # --- Save MIDI ---
+    # --- Save MIDI file ---
+    # Create folder for this seed (e.g. "seed_4")
     seed_dir = out_root / f"seed_{seed}"
     seed_dir.mkdir(parents=True, exist_ok=True)
-    midi_path = seed_dir / f"seed_{seed}_{seq_name}.mid"
-    with open(midi_path, "wb") as out:
-        mf.writeFile(out)
 
-    # --- Save PianoVision JSON next to the MIDI ---
-    if write_json:
-        writer = PianoVisionJsonWriter(bpm=tempo, ts=(4,4), ppq=960)
-        json_path = midi_path.with_suffix(".pv.json") 
-        writer.write(json_path, right_notes, left_notes, f"seed_{seed}_{seq_name}")
+    # Build output path (e.g. "seed_4_Block_1.mid")
+    midi_path = seed_dir / f"seed_{seed}_{seq_name}.mid"
+
+    # Write binary MIDI file
+    with open(midi_path, "wb") as fh:
+        mf.writeFile(fh)
 
     return midi_path
-

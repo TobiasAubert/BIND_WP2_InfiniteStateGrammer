@@ -25,8 +25,6 @@ def generate_states(pitches_left, pitches_right, n_left=2, n_right=2,n_cross=5, 
         >>> generate_states({"C4": 60, "D4": 62}, {"C5": 72, "E5": 76}, seed=1)
         [frozenset({60, 62}), frozenset({72, 76}), frozenset({60, 72})]
     """
-
-
     if seed is None:
         raise ValueError("You must provide a random seed for reproducibility.")
     
