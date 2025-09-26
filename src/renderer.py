@@ -7,6 +7,7 @@ def render_sequence(
     seq_name: str,
     state_sequence,
     dyads,
+    fingers_used,
     *,
     tempo: float,
     maps: HandMaps,
@@ -37,7 +38,7 @@ def render_sequence(
 
     # --- Step 1: Convert the sequence into MIDI-friendly events + JSON note dicts ---
     events, right_notes, left_notes = capture_notes(
-        state_sequence, dyads, tempo=tempo, maps=maps
+        state_sequence, dyads, fingers_used, tempo=tempo, maps=maps
     )
 
     # --- Step 2: Write MIDI file from captured events ---

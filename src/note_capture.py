@@ -64,7 +64,8 @@ def build_default_maps(pitches_left: Dict[str, int],
 
 def capture_notes(
     state_sequence: Sequence[int],
-    dyads: Sequence[Tuple[int, int]],
+    dyads: Sequence[frozenset[int]],
+    fingers_used: int,
     tempo: float,
     maps: HandMaps,
     *,
@@ -74,11 +75,11 @@ def capture_notes(
     channel: int = 0,   # kept for convenience if you later write to a MIDIFile
 ) -> Tuple[List[Dict[str, Any]], List[dict], List[dict], float]:
     """
-    Convert a sequence of dyad indices into MIDI-friendly events and JSON note dicts.
+    Convert a sequence of chord indices into MIDI-friendly events and JSON note dicts.
 
     Args:
-        state_sequence: Sequence of indices selecting dyads (pairs of pitches).
-        dyads: List of (pitch_a, pitch_b) pairs. Each state_sequence element indexes into this list.
+        state_sequence: Sequence of indices selecting chords (sets of pitches).
+        dyads: List of frozensets containing pitches. Each state_sequence element indexes into this list.
         tempo: Tempo in beats per minute.
         maps: HandMaps object describing left/right hand keys and finger numbers.
         start_beat: Starting beat offset (default = 0.0).
@@ -103,10 +104,10 @@ def capture_notes(
     # Velocity scaled to 0..1 for JSON
     vel_float = round(velocity / 127.0, 6)
 
-    # Iterate over sequence of dyad indices
+    # Iterate over sequence of chord indices
     for d in state_sequence:
-        a, b = dyads[d]  # two pitches in the dyad
-        for pitch in (a, b):
+        chord_notes = list(dyads[d])  # convert frozenset to list (dynamic number of pitches)
+        for pitch in chord_notes:
             p = int(pitch)
             # Decide which track/hand this pitch belongs to
             track = 1 if p in maps.lh_keys else 0

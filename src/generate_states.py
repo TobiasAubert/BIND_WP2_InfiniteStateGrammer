@@ -3,7 +3,7 @@ import random, itertools
 # 2 nur links 2 nur recht 5 beide
 
 
-def generate_states(pitches_left, pitches_right, n_left=2, n_right=2,n_cross=5, seed = None):
+def generate_states(pitches_left, pitches_right, n_left=2, n_right=2,n_cross=5, fingers_used = 2,  seed = None):
     """
     Generate dyad states from two pitch dictionaries. A seed is manditory to replicate states if needed.
     It generets dyads left-left, right-right, left-right
@@ -34,17 +34,55 @@ def generate_states(pitches_left, pitches_right, n_left=2, n_right=2,n_cross=5, 
     L = list(pitches_left.values())
     R = list(pitches_right.values())
 
-    all_dyads_left = [frozenset(pair) for pair in itertools.combinations(L,2)]
-    all_dyads_right = [frozenset(pair) for pair in itertools.combinations(R,2)]
-    all_dyads_cross = [frozenset(pair) for pair in itertools.product(L,R)]
+    if fingers_used <= 5:
+        all_dyads_left = [frozenset(combo) for combo in itertools.combinations(L, fingers_used)]
+        all_dyads_right = [frozenset(combo) for combo in itertools.combinations(R,fingers_used)]
+    else:
+        n_left = 0
+        n_right = 0
+        Warning("You are using more than 5 fingers per hand one handed inpossible only uses both hands")
+
+
+    # Cross-hand: mindestens 1 von links UND mindestens 1 von rechts
+    all_dyads_cross = []
+    if fingers_used <= 1:
+        all_dyads_cross = [frozenset(combo) for combo in itertools.combinations(L+R, fingers_used)]
+    else:
+        for combo in itertools.combinations(L+R, fingers_used):
+            # Prüfe ob mindestens eine Note aus L und mindestens eine aus R dabei ist
+            has_left = any(note in L for note in combo)
+            has_right = any(note in R for note in combo)
+            if has_left and has_right:
+                all_dyads_cross.append(frozenset(combo))
+
+    # to prevent errors that not enough chords for rng.sample
+    if fingers_used == 4:
+        Warning("You are using 4 fingers per hand. Only 5 different states possible per hand if only one hand is used."
+        "if not 9 states it will be filled up with cross hand states")
+        if n_left > 5:
+            n_left = 5
+        if n_right > 5:
+            n_right = 5
+    if fingers_used == 5:
+        Warning("You are using 5 fingers per hand. Only 1 different state possible per hand if only one hand is used."
+                "if not 9 states it will be filled up with cross hand states")
+        if n_left > 1:
+            n_left = 1
+        if n_right > 1:
+            n_right = 1
+    
+    if (n_left+n_right+n_cross != 9):
+        x = 9 - (n_left+n_right+n_cross)
+        n_cross += x
 
     states = []
-    states.extend(rng.sample(all_dyads_left, 2))
-    states.extend(rng.sample(all_dyads_right, 2))
-    states.extend(rng.sample(all_dyads_cross, 5))
+    if fingers_used <=5: ## one handed not possible therefore deactivated
+        states.extend(rng.sample(all_dyads_left, n_left))
+        states.extend(rng.sample(all_dyads_right, n_right))
+    states.extend(rng.sample(all_dyads_cross, n_cross))
     rng.shuffle(states)
 
-    return states, seed
+    return states
 
 
 
