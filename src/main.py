@@ -12,8 +12,12 @@ import sys
 
 # --- config (easy to tweak / pass via CLI later)
 TEMPO = 120
-SEED  = 6
+SEED  = 1
 FINGERS_USED = 6  # how many fingers per hand to use (for dyad generation)
+# how many chords to generate of each type (must sum to 9)
+CHORDS_LEFT_HAND = 2 # how many only left hand chords as states ()
+CHORDS_RIGHT_HAND = 2 # how many only right hand chords as states
+CHORDS_CROSS_HAND = 5 # how many cross hand chords as states
 
 # --- pitches (note: your LH is higher than RH here; that's fine if intentional)
 pitches_left  = {"C4": 60, "D4": 62, "E4": 64, "F4": 65, "G4": 67}
@@ -25,6 +29,8 @@ def main():
     out_root = here.parent / "generated_midis"
 
     # Validation
+    if CHORDS_LEFT_HAND + CHORDS_RIGHT_HAND + CHORDS_CROSS_HAND != 9:
+        sys.exit("Error: CHORDS_LEFT_HAND + CHORDS_RIGHT_HAND + CHORDS_CROSS_HAND must sum to 9!")
     if FINGERS_USED > 10:
         sys.exit("Error: FINGERS_USED cannot be more than 10! most people only have 10")
     if FINGERS_USED < 1:
@@ -32,7 +38,13 @@ def main():
 
     # 1) dyads + seed
     dyads = generate_states.generate_states(
-        pitches_left, pitches_right, fingers_used=FINGERS_USED, seed=SEED
+        pitches_left, 
+        pitches_right, 
+        n_left=CHORDS_LEFT_HAND, 
+        n_right=CHORDS_RIGHT_HAND, 
+        n_cross=CHORDS_CROSS_HAND, 
+        fingers_used=FINGERS_USED, 
+        seed=SEED
     )
 
     # 2) build maps (hand routing + optional fingerings)

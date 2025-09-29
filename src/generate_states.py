@@ -3,7 +3,7 @@ import random, itertools
 # 2 nur links 2 nur recht 5 beide
 
 
-def generate_states(pitches_left, pitches_right, n_left=2, n_right=2,n_cross=5, fingers_used = 2,  seed = None):
+def generate_states(pitches_left, pitches_right, n_left, n_right,n_cross, fingers_used = 2,  seed = None):
     """
     Generate dyad states from two pitch dictionaries. A seed is manditory to replicate states if needed.
     It generets dyads left-left, right-right, left-right
