@@ -5,20 +5,20 @@ import random, itertools
 
 def generate_states(pitches_left, pitches_right, n_left, n_right,n_cross, fingers_used = 2,  seed = None):
     """
-    Generate dyad states from two pitch dictionaries. A seed is manditory to replicate states if needed.
-    It generets dyads left-left, right-right, left-right
-    The order of the dyads will be shuffeld before returned
+    Generate chord states from two pitch dictionaries. A seed is manditory to replicate states if needed.
+    It generets chords left-left, right-right, left-right
+    The order of the chords will be shuffeld before returned
 
     Args:
         pitches_left (dict[str, int]): Mapping note names to MIDI values for left hand.
         pitches_right (dict[str, int]): Mapping note names to MIDI values for right hand.
-        n_left (int): Number of left-hand dyads to sample.
-        n_right (int): Number of right-hand dyads to sample.
-        n_cross (int): Number of cross-hand dyads to sample.
+        n_left (int): Number of left-hand chords to sample.
+        n_right (int): Number of right-hand chords to sample.
+        n_cross (int): Number of cross-hand chords to sample.
         seed (int | None): Random seed for reproducibility.
 
     Returns:
-        list[frozenset[int]]: A list of dyads, where each dyad is a frozenset of two MIDI pitches.
+        list[frozenset[int]]: A list of chords, where each chord is a frozenset of two MIDI pitches.
         int seed (which seed)
 
     Example:
@@ -35,8 +35,8 @@ def generate_states(pitches_left, pitches_right, n_left, n_right,n_cross, finger
     R = list(pitches_right.values())
 
     if fingers_used <= 5:
-        all_dyads_left = [frozenset(combo) for combo in itertools.combinations(L, fingers_used)]
-        all_dyads_right = [frozenset(combo) for combo in itertools.combinations(R,fingers_used)]
+        all_chords_left = [frozenset(combo) for combo in itertools.combinations(L, fingers_used)]
+        all_chords_right = [frozenset(combo) for combo in itertools.combinations(R,fingers_used)]
     else:
         n_left = 0
         n_right = 0
@@ -44,16 +44,16 @@ def generate_states(pitches_left, pitches_right, n_left, n_right,n_cross, finger
 
 
     # Cross-hand: mindestens 1 von links UND mindestens 1 von rechts
-    all_dyads_cross = []
+    all_chords_cross = []
     if fingers_used <= 1:
-        all_dyads_cross = [frozenset(combo) for combo in itertools.combinations(L+R, fingers_used)]
+        all_chords_cross = [frozenset(combo) for combo in itertools.combinations(L+R, fingers_used)]
     else:
         for combo in itertools.combinations(L+R, fingers_used):
             # Prüfe ob mindestens eine Note aus L und mindestens eine aus R dabei ist
             has_left = any(note in L for note in combo)
             has_right = any(note in R for note in combo)
             if has_left and has_right:
-                all_dyads_cross.append(frozenset(combo))
+                all_chords_cross.append(frozenset(combo))
 
     # to prevent errors that not enough chords for rng.sample
     if fingers_used == 4:
@@ -77,9 +77,9 @@ def generate_states(pitches_left, pitches_right, n_left, n_right,n_cross, finger
 
     states = []
     if fingers_used <=5: ## one handed not possible therefore deactivated
-        states.extend(rng.sample(all_dyads_left, n_left))
-        states.extend(rng.sample(all_dyads_right, n_right))
-    states.extend(rng.sample(all_dyads_cross, n_cross))
+        states.extend(rng.sample(all_chords_left, n_left))
+        states.extend(rng.sample(all_chords_right, n_right))
+    states.extend(rng.sample(all_chords_cross, n_cross))
     rng.shuffle(states)
 
     return states

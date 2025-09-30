@@ -5,7 +5,7 @@ def load_sequences(folder: Path):
     Load state index sequences from all `.txt` files in a folder.
 
     Each text file is expected to contain one integer per line,
-    representing the index of the dyad/state to be played at that step.
+    representing the index of the chord/state to be played at that step.
 
     Args:
         folder (Path): Path to the folder containing `.txt` sequence files.

@@ -64,7 +64,7 @@ def build_default_maps(pitches_left: Dict[str, int],
 
 def capture_notes(
     state_sequence: Sequence[int],
-    dyads: Sequence[frozenset[int]],
+    chords: Sequence[frozenset[int]],
     fingers_used: int,
     tempo: float,
     maps: HandMaps,
@@ -79,11 +79,11 @@ def capture_notes(
 
     Args:
         state_sequence: Sequence of indices selecting chords (sets of pitches).
-        dyads: List of frozensets containing pitches. Each state_sequence element indexes into this list.
+        chords: List of frozensets containing pitches. Each state_sequence element indexes into this list.
         tempo: Tempo in beats per minute.
         maps: HandMaps object describing left/right hand keys and finger numbers.
         start_beat: Starting beat offset (default = 0.0).
-        step_beats: Duration of each dyad in beats (default = 1.0).
+        step_beats: Duration of each chord in beats (default = 1.0).
         velocity: MIDI velocity (0–127).
         channel: MIDI channel (default = 0).
 
@@ -106,7 +106,7 @@ def capture_notes(
 
     # Iterate over sequence of chord indices
     for d in state_sequence:
-        chord_notes = list(dyads[d])  # convert frozenset to list (dynamic number of pitches)
+        chord_notes = list(chords[d])  # convert frozenset to list (dynamic number of pitches)
         for pitch in chord_notes:
             p = int(pitch)
             # Decide which track/hand this pitch belongs to

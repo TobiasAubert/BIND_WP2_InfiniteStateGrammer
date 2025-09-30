@@ -13,7 +13,7 @@ import sys
 # --- config (easy to tweak / pass via CLI later)
 TEMPO = 120
 SEED  = 1
-FINGERS_USED = 6  # how many fingers per hand to use (for dyad generation)
+FINGERS_USED = 6  # how many fingers per hand to use (for chord generation)
 # how many chords to generate of each type (must sum to 9)
 CHORDS_LEFT_HAND = 2 # how many only left hand chords as states ()
 CHORDS_RIGHT_HAND = 2 # how many only right hand chords as states
@@ -36,8 +36,8 @@ def main():
     if FINGERS_USED < 1:
         sys.exit("Error: FINGERS_USED must be at least 1!")
 
-    # 1) dyads + seed
-    dyads = generate_states.generate_states(
+    # 1) chords + seed
+    chords = generate_states.generate_states(
         pitches_left, 
         pitches_right, 
         n_left=CHORDS_LEFT_HAND, 
@@ -58,7 +58,7 @@ def main():
         render_sequence(
             seq_name=name,
             state_sequence=seq,
-            dyads=dyads,
+            chords=chords,
             fingers_used=FINGERS_USED,
             tempo=TEMPO,
             maps=maps,
