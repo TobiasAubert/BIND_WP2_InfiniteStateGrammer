@@ -126,8 +126,8 @@ def write_states_file(out_dir, states_listed, seed):
             for idx, line in enumerate(states_listed):
                 fh.write(f"state{idx}: {line}\n")
         print(f"Wrote states list to: {out_file}")
-        if states_listed:
-            print("state0:", states_listed[0])
+        # if states_listed:
+        #     print("state0:", states_listed[0])
     except Exception as e:
         print(f"Warning: could not write states list file: {e}")
 

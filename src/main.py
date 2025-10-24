@@ -57,9 +57,11 @@ def main():
     # 3) load sequences
     state_sequences = load_sequences.load_sequences(sequences_folder)
 
-    # 4) render each sequence
+    # 4) render each sequence — collect generated file paths so we can print
+    # a single folder-wise summary instead of one line per file.
+    created_files = []
     for name, seq in state_sequences.items():
-        render_sequence(
+        midi_path, json_path = render_sequence(
             seq_name=name,
             state_sequence=seq,
             chords=chords,
@@ -70,6 +72,22 @@ def main():
             out_root=out_root,
             seed=SEED,
         )
+        created_files.append(midi_path)
+        created_files.append(json_path)
+
+    # Print a concise folder-wise summary for the seed folder
+    try:
+        seed_dir = out_root / f"seed_{SEED}"
+        if created_files:
+            print(f"Wrote {len(created_files)} files to: {seed_dir}")
+            for p in created_files:
+                # print just the filename to keep the summary compact
+                print(" -", p.name)
+        else:
+            print(f"No files created for seed {SEED}.")
+    except Exception:
+        # be resilient if something odd happened; don't crash
+        pass
 
 if __name__ == "__main__":
     main()
