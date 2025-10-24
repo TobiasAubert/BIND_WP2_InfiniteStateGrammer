@@ -15,6 +15,7 @@ def render_sequence(
     seed: int,
     ts=(4, 4),
     ppq=960,
+    scroll_speed: float = 1.0,
 ):
     """
     Render one state sequence into both a MIDI file and a PianoVision JSON file.
@@ -51,7 +52,8 @@ def render_sequence(
     )
 
     # --- Step 3: Write PianoVision JSON next to the MIDI file ---
-    writer = PianoVisionJsonWriter(bpm=tempo, ts=ts, ppq=ppq)
+    # scroll_speed > 1 speeds up visuals relative to audio; kept separate from tempo
+    writer = PianoVisionJsonWriter(bpm=tempo, ts=ts, ppq=ppq, visual_speed=scroll_speed)
     json_path = midi_path.with_suffix(".pv.json")
     writer.write(json_path, right_notes, left_notes, f"seed_{seed}_{seq_name}")
 

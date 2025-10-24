@@ -12,8 +12,9 @@ import sys
 
 # --- config (easy to tweak / pass via CLI later)
 TEMPO = 120
-SEED  = 1
-FINGERS_USED = 6  # how many fingers per hand to use (for chord generation)
+SEED  = 20
+FINGERS_USED = 2  # how many fingers per hand to use (for chord generation)
+SCROLL_SPEED = 20.0  # visual scroll speed multiplier for PianoVision JSON (>1 = faster visuals)
 # how many chords to generate of each type (must sum to 9)
 CHORDS_LEFT_HAND = 2 # how many only left hand chords as states ()
 CHORDS_RIGHT_HAND = 2 # how many only right hand chords as states
@@ -36,16 +37,19 @@ def main():
     if FINGERS_USED < 1:
         sys.exit("Error: FINGERS_USED must be at least 1!")
 
-    # 1) chords + seed
-    chords = generate_states.generate_states(
-        pitches_left, 
-        pitches_right, 
-        n_left=CHORDS_LEFT_HAND, 
-        n_right=CHORDS_RIGHT_HAND, 
-        n_cross=CHORDS_CROSS_HAND, 
-        fingers_used=FINGERS_USED, 
-        seed=SEED
+    # 1) chords + seed (generate_states now returns both chords and a human-readable list)
+    chords, states_listed = generate_states.generate_states(
+        pitches_left,
+        pitches_right,
+        n_left=CHORDS_LEFT_HAND,
+        n_right=CHORDS_RIGHT_HAND,
+        n_cross=CHORDS_CROSS_HAND,
+        fingers_used=FINGERS_USED,
+        seed=SEED,
     )
+
+    # write states list once per seed 
+    generate_states.write_states_file(out_root, states_listed, SEED)
 
     # 2) build maps (hand routing + optional fingerings)
     maps = build_default_maps(pitches_left, pitches_right)
@@ -61,6 +65,7 @@ def main():
             chords=chords,
             fingers_used=FINGERS_USED,
             tempo=TEMPO,
+            scroll_speed=SCROLL_SPEED,
             maps=maps,
             out_root=out_root,
             seed=SEED,

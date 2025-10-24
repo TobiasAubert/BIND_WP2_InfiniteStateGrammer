@@ -1,9 +1,10 @@
 import random, itertools
+from collections import defaultdict
 
 # 2 nur links 2 nur recht 5 beide
 
 
-def generate_states(pitches_left, pitches_right, n_left, n_right,n_cross, fingers_used = 2,  seed = None):
+def generate_states(pitches_left, pitches_right, n_left, n_right,n_cross, fingers_used = 2,  seed = None,):
     """
     Generate chord states from two pitch dictionaries. A seed is manditory to replicate states if needed.
     It generets chords left-left, right-right, left-right
@@ -82,7 +83,53 @@ def generate_states(pitches_left, pitches_right, n_left, n_right,n_cross, finger
     states.extend(rng.sample(all_chords_cross, n_cross))
     rng.shuffle(states)
 
-    return states
+
+    ## create txt to list the states
+    states_listed = []
+    # merge dictionaries (non-mutating)
+    pitches_combine = {**pitches_left, **pitches_right}
+
+    # build reverse lookup: midi -> [note names]
+    reverse_map = defaultdict(list)
+    for note_name, midi in pitches_combine.items():
+        reverse_map[midi].append(note_name)
+
+    # states are frozensets (unordered, not indexable) so iterate their elements
+    for idx, state in enumerate(states):
+        parts = []
+        # sort for stable output
+        for midi in sorted(state):
+            names = reverse_map.get(midi, [f"#{midi}"])
+            # use the first name if multiple map to the same midi value
+            parts.append(f"{names[0]}: {midi}")
+        states_listed.append(", ".join(parts))
+
+    
+
+    # Return both the raw states and the human-readable list; the caller
+    # (e.g. main) can write the file once per seed.
+    return states, states_listed
+
+
+def write_states_file(out_dir, states_listed, seed):
+    """Write the human-readable states_listed to out_dir/states_seed_<seed>.txt.
+
+    This is a small helper so callers (like main) can keep their code tidy.
+    It swallows errors and prints a warning rather than raising.
+    """
+    try:
+        from pathlib import Path
+        out_dir = Path(out_dir)
+        out_dir.mkdir(parents=True, exist_ok=True)
+        out_file = out_dir / f"states_seed_{seed}.txt"
+        with open(out_file, "w", encoding="utf-8") as fh:
+            for idx, line in enumerate(states_listed):
+                fh.write(f"state{idx}: {line}\n")
+        print(f"Wrote states list to: {out_file}")
+        if states_listed:
+            print("state0:", states_listed[0])
+    except Exception as e:
+        print(f"Warning: could not write states list file: {e}")
 
 
 

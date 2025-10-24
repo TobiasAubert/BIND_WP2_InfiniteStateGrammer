@@ -118,10 +118,20 @@ class PianoVisionJsonWriter:
       - finger: (optional) finger number
     """
 
-    def __init__(self, bpm: float, ts=(4, 4), ppq=960):
+    def __init__(self, bpm: float, ts=(4, 4), ppq=960, visual_speed: float = 1.0):
+        """
+        visual_speed: multiplier for the visual scroll speed. Values >1.0 make visuals
+        move faster (notes appear/finish sooner), values <1.0 make visuals slower.
+
+        Internally this writer scales the note 'start' and 'duration' times by 1/visual_speed
+        when producing the JSON. The MIDI tempo (bpm) is left unchanged so audio playback
+        remains the same while visuals can be sped up or slowed down independently.
+        """
         self.bpm = float(bpm)
         self.ts = ts
         self.ppq = int(ppq)
+        # store visual speed multiplier (>1 speeds up visuals)
+        self.visual_speed = float(visual_speed) if visual_speed and visual_speed > 0 else 1.0
 
     def build_json(self, right_notes: List[Dict[str, Any]],
                    left_notes: List[Dict[str, Any]],
@@ -129,11 +139,24 @@ class PianoVisionJsonWriter:
         """
         Construct the full PianoVision JSON payload (as a dict).
         """
-        song_len = self._song_length(right_notes, left_notes)
+        # Apply visual speed scaling to notes without mutating the originals.
+        # A visual_speed > 1.0 results in shorter visual times (faster scroll).
+        scale = 1.0 / self.visual_speed
+        def _scale_notes(notes):
+            return [
+                {**n, "start": n["start"] * scale, "duration": n["duration"] * scale}
+                for n in notes
+            ]
+
+        scaled_right = _scale_notes(right_notes)
+        scaled_left = _scale_notes(left_notes)
+
+        song_len = self._song_length(scaled_right, scaled_left)
         measures, _ = _build_measures(self.bpm, self.ts, song_len, self.ppq)
 
         return {
-            "supportingTracks": self._supporting_tracks(right_notes, left_notes),
+            # include original supportingTracks times? use scaled notes so visuals match tracksV2
+            "supportingTracks": self._supporting_tracks(scaled_right, scaled_left),
             "start_time": 0,
             "song_length": round(song_len, 6),
             "resolution": self.ppq,
@@ -145,8 +168,8 @@ class PianoVisionJsonWriter:
             ],
             "measures": measures,
             "tracksV2": {
-                "right": _group_tracks_v2(right_notes, "r", self.bpm, self.ts, self.ppq),
-                "left":  _group_tracks_v2(left_notes,  "l", self.bpm, self.ts, self.ppq)
+                "right": _group_tracks_v2(scaled_right, "r", self.bpm, self.ts, self.ppq),
+                "left":  _group_tracks_v2(scaled_left,  "l", self.bpm, self.ts, self.ppq)
             },
             "original": {"header": {
                 "keySignatures": [], "meta": [], "name": "",
@@ -155,6 +178,8 @@ class PianoVisionJsonWriter:
                 "timeSignatures": []
             }},
             "name": name,
+            # Informational: visual_speed controls how fast visuals run relative to audio.
+            "visual_speed": self.visual_speed,
         }
 
     def write(self, path: Path,
